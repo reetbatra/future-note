@@ -9,8 +9,11 @@ MONGO_PWD = os.getenv("MONGO_PWD")
 
 def mongo_client():
     client = MongoClient(
-        "mongodb+srv://" + urllib.parse.quote(MONGO_USER) + ":"
-        + urllib.parse.quote(MONGO_PWD) + "@"
+        "mongodb+srv://"
+        + urllib.parse.quote(MONGO_USER)
+        + ":"
+        + urllib.parse.quote(MONGO_PWD)
+        + "@"
         + MONGO_URL
     )
     print("mongo ")

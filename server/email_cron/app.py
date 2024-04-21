@@ -9,12 +9,11 @@ mongo_obj = mongo_client()
 
 def handler(event, context):
     try:
-
         curr_date = datetime.now().date()
         print(curr_date)
         db = mongo_obj["future_note_emails"]
         collection = db[curr_date]
-        
+
         mongo_email_data = collection.find({})
         emails_to_send = [] if mongo_email_data is None else mongo_email_data
         for emails in emails_to_send:
@@ -33,10 +32,7 @@ def handler(event, context):
             "message": "function executed successfully!",
         }
 
-        response = {
-            "statusCode": 200,
-            "body": json.dumps(body)
-        }
+        response = {"statusCode": 200, "body": json.dumps(body)}
 
         return response
     except Exception:

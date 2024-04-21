@@ -7,9 +7,7 @@ from sendgrid.helpers.mail import Mail, Email, To, Content
 def send_email(email_to_send, email_content):
     try:
         print("inside the send email funciton")
-        sg = sendgrid.SendGridAPIClient(
-            api_key=os.environ.get('SENDGRID_API_KEY')
-        )
+        sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
         from_email = Email("test@example.com")  # TODO: change the eamil
         to_email = To(email_to_send)
         subject = "A message to you from the Future Note"
@@ -27,9 +25,7 @@ def send_email(email_to_send, email_content):
         }
         return resp
     except Exception:
-        print(
-            f"error in sending the email: {traceback.format_exc()}"
-        )
+        print(f"error in sending the email: {traceback.format_exc()}")
         erro_mssg = traceback.format_exc()
         resp = {
             "statusCode": 500,
