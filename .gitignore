@@ -160,3 +160,14 @@ cython_debug/
 #.idea/
 
 node_modules
+.build
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
