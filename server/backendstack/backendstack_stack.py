@@ -18,7 +18,6 @@ from email_cron.env import get_environment as email_cron
 
 
 class BackendstackStack(Stack):
-
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -45,9 +44,7 @@ class BackendstackStack(Stack):
             handler="app.handler",
             code=_lambda.Code.from_asset("./form_submission"),
             environment=form_submission_environment(),
-            layers=[
-                self.create_dependencies_layer(self.stack_name, "form_submission")
-            ],
+            layers=[self.create_dependencies_layer(self.stack_name, "form_submission")],
             timeout=Duration.seconds(300),
             memory_size=128,
             # vpc=vpc,
@@ -61,22 +58,23 @@ class BackendstackStack(Stack):
             handler="app.handler",
             code=_lambda.Code.from_asset("./email_cron"),
             environment=email_cron(),
-            layers=[
-                self.create_dependencies_layer(self.stack_name, "email_cron")
-            ],
+            layers=[self.create_dependencies_layer(self.stack_name, "email_cron")],
             timeout=Duration.seconds(300),
             memory_size=128,
             # vpc=vpc,
             log_retention=logs.RetentionDays.ONE_DAY,
         )
 
-        base_api = api_gateway.RestApi(self, 'backendstack_api_gateway', rest_api_name='backendstack_api_gateway')
+        base_api = api_gateway.RestApi(
+            self, "backendstack_api_gateway", rest_api_name="backendstack_api_gateway"
+        )
 
         example_entity = base_api.root.add_resource(
-            'form_submission',
+            "form_submission",
             default_cors_preflight_options=api_gateway.CorsOptions(
-                allow_methods=['POST', 'GET', 'OPTIONS'],
-                allow_origins=api_gateway.Cors.ALL_ORIGINS)
+                allow_methods=["POST", "GET", "OPTIONS"],
+                allow_origins=api_gateway.Cors.ALL_ORIGINS,
+            ),
         )
         example_entity_lambda_integration = api_gateway.LambdaIntegration(
             fn_form_submission_function,
@@ -85,45 +83,51 @@ class BackendstackStack(Stack):
                 api_gateway.IntegrationResponse(
                     status_code="200",
                     response_parameters={
-                        'method.response.header.Access-Control-Allow-Origin': "'*'"
-                    }
+                        "method.response.header.Access-Control-Allow-Origin": "'*'"
+                    },
                 )
-            ]
+            ],
         )
         example_entity.add_method(
-            'GET', example_entity_lambda_integration,
+            "GET",
+            example_entity_lambda_integration,
             method_responses=[
                 api_gateway.MethodResponse(
                     status_code="200",
                     response_parameters={
-                        'method.response.header.Access-Control-Allow-Origin': True
-                    }
+                        "method.response.header.Access-Control-Allow-Origin": True
+                    },
                 )
-            ]
+            ],
         )
 
         rule = events.Rule(
-                self,
-                "email_cron_scheduler",
-                schedule=events.Schedule.cron(minute="00", hour="00", month="*", week_day="*", year="*"),
-                # schedule=events.Schedule.rate(aws_cdk_duration.hours(24)),
-            )
+            self,
+            "email_cron_scheduler",
+            schedule=events.Schedule.cron(
+                minute="00", hour="00", month="*", week_day="*", year="*"
+            ),
+            # schedule=events.Schedule.rate(aws_cdk_duration.hours(24)),
+        )
         rule.add_target(
             targets.LambdaFunction(
-                fn_email_cron, event=events.RuleTargetInput.from_object({"event_type": "scheduler"})
+                fn_email_cron,
+                event=events.RuleTargetInput.from_object({"event_type": "scheduler"}),
             )
         )
 
-    def create_dependencies_layer(self, project_name, function_name: str) -> _lambda.LayerVersion:
-        requirements_file = f'{function_name}/requirements.txt'
-        output_dir = f'../.build/{function_name}'
+    def create_dependencies_layer(
+        self, project_name, function_name: str
+    ) -> _lambda.LayerVersion:
+        requirements_file = f"{function_name}/requirements.txt"
+        output_dir = f"../.build/{function_name}"
 
-        if not os.environ.get('SKIP_PIP'):
+        if not os.environ.get("SKIP_PIP"):
             subprocess.check_call(
-                f'pip install -r {requirements_file} -t {output_dir}/python'.split()
+                f"pip install -r {requirements_file} -t {output_dir}/python".split()
             )
 
-        layer_id = f'{project_name}-{function_name}-dependencies'
+        layer_id = f"{project_name}-{function_name}-dependencies"
         layer_code = _lambda.Code.from_asset(output_dir)
 
         return _lambda.LayerVersion(self, layer_id, code=layer_code)
