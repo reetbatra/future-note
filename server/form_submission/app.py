@@ -7,18 +7,17 @@ mongo_obj = mongo_client()
 
 def handler(event, context):
     try:
-        print("handler invoked")
-        body = event["body"]
-        if "email" in body:
+        print(f"handler invoked, event: {event}")
+        if "email" in event:
             print("have the email to send the mail to")
             # mongo insert
-            date_to_send = body["date_to_send"]
+            date_to_send = event["date_to_send"]
             db = mongo_obj["future_note_emails"]
             collection = db[date_to_send]
             _insert_obj = {
                 "date": date_to_send,
-                "email": body["email"],
-                "content": body["content"],
+                "email": event["email"],
+                "content": event["content"],
                 "insert_time": datetime.now(),
             }
             collection.insert_one(_insert_obj)
@@ -33,5 +32,3 @@ def handler(event, context):
             }
     except Exception:
         print(f"Error in the handler execution : {traceback.format_exc()}")
-    finally:
-        mongo_obj.close()

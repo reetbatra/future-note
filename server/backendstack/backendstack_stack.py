@@ -16,6 +16,8 @@ from constructs import Construct
 from form_submission.env import get_environment as form_submission_environment
 from email_cron.env import get_environment as email_cron
 
+ENV = os.getenv("ENVIRONMENT")
+
 
 class BackendstackStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -69,14 +71,14 @@ class BackendstackStack(Stack):
             self, "backendstack_api_gateway", rest_api_name="backendstack_api_gateway"
         )
 
-        example_entity = base_api.root.add_resource(
+        form_submission_api = base_api.root.add_resource(
             "form_submission",
             default_cors_preflight_options=api_gateway.CorsOptions(
-                allow_methods=["POST", "GET", "OPTIONS"],
+                allow_methods=["POST", "OPTIONS"],
                 allow_origins=api_gateway.Cors.ALL_ORIGINS,
             ),
         )
-        example_entity_lambda_integration = api_gateway.LambdaIntegration(
+        form_submission_lambda_integration = api_gateway.LambdaIntegration(
             fn_form_submission_function,
             proxy=False,
             integration_responses=[
@@ -88,9 +90,9 @@ class BackendstackStack(Stack):
                 )
             ],
         )
-        example_entity.add_method(
-            "GET",
-            example_entity_lambda_integration,
+        form_submission_api.add_method(
+            "POST",
+            form_submission_lambda_integration,
             method_responses=[
                 api_gateway.MethodResponse(
                     status_code="200",
@@ -101,20 +103,24 @@ class BackendstackStack(Stack):
             ],
         )
 
-        rule = events.Rule(
-            self,
-            "email_cron_scheduler",
-            schedule=events.Schedule.cron(
-                minute="00", hour="00", month="*", week_day="*", year="*"
-            ),
-            # schedule=events.Schedule.rate(aws_cdk_duration.hours(24)),
-        )
-        rule.add_target(
-            targets.LambdaFunction(
-                fn_email_cron,
-                event=events.RuleTargetInput.from_object({"event_type": "scheduler"}),
+        if ENV == "prod":
+            # having daily lambda cron only for prod
+            rule = events.Rule(
+                self,
+                "email_cron_scheduler",
+                schedule=events.Schedule.cron(
+                    minute="00", hour="00", month="*", week_day="*", year="*"
+                ),
+                # schedule=events.Schedule.rate(aws_cdk_duration.hours(24)),
             )
-        )
+            rule.add_target(
+                targets.LambdaFunction(
+                    fn_email_cron,
+                    event=events.RuleTargetInput.from_object(
+                        {"event_type": "scheduler"}
+                    ),
+                )
+            )
 
     def create_dependencies_layer(
         self, project_name, function_name: str

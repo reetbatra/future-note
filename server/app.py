@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# import os
+import os
 import aws_cdk as cdk
 from dotenv import load_dotenv
 from backendstack.backendstack_stack import BackendstackStack
@@ -8,9 +8,11 @@ load_dotenv()
 
 app = cdk.App()
 
+ENV = os.getenv("ENVIRONMENT", "dev")
+
 BackendstackStack(
     app,
-    "BackendstackStack",
+    ENV + "-future-note",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
