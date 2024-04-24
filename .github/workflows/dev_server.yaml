@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: .
+        working-directory: ./server
     steps:
       - name: checkout the repository
         uses: actions/checkout@v2
