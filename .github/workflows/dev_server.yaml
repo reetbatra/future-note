@@ -1,0 +1,48 @@
+name: dev
+concurrency: development
+on:
+  push:
+    branches:
+      - pre-master
+
+jobs:
+  linux_job:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+    steps:
+      - name: checkout the repository
+        uses: actions/checkout@v2
+        with:
+          ref: 'development'
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9.16
+          cache: 'pip' # caching pip dependencies
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{secrets.AWS_REGION}}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # MaxSessionDuration: 28800
+      - name: Create .env file
+        uses: ozaytsev86/create-env-file@v1
+        with:
+            MONGO_USER: ${{ secrets.MONGO_USER }}
+            MONGO_PWD: ${{ secrets.MONGO_PWD }}
+            MONGO_URL: ${{secrets.MONGO_URL}}
+            ENVIRONMENT: ${{secrets.ENVIRONMENT}}
+      - run: cat ./.env
+      - name: install requirements.txt
+        run: 'pip3 install -r requirements.txt'
+      - name: install npm
+        run: 'sudo apt update -y && sudo apt install nodejs npm -y'
+      - name: install aws cdk
+        run: 'sudo npm install -g aws-cdk'
+      - name: CDK synth
+        run: cdk synth
+      - name: CDK deploy
+        run: cdk deploy --required-approval never --force
