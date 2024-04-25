@@ -9,13 +9,11 @@ mongo_obj = mongo_client()
 
 def handler(event, context):
     try:
-        curr_date = datetime.now().date()
-        print(curr_date)
+        curr_date = datetime.now().date().strftime("%d-%m-%Y")
         db = mongo_obj["future_note_emails"]
-        collection = db[curr_date]
+        collection = db[str(curr_date)]
 
-        mongo_email_data = collection.find({})
-        emails_to_send = [] if mongo_email_data is None else mongo_email_data
+        emails_to_send = list(collection.find({}))
         for emails in emails_to_send:
             content = emails["content"]
             email = emails["email"]
@@ -37,3 +35,7 @@ def handler(event, context):
         return response
     except Exception:
         print(f"Error in the handler function :{traceback.format_exc()}")
+
+
+if __name__ == "__main__":
+    handler(None, None)
