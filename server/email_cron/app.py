@@ -2,7 +2,9 @@ import json
 import traceback
 from datetime import datetime
 from connections import mongo_client
-from sendgrid_intergration import send_email
+
+# from sendgrid_intergration import send_email
+from ses_email_integration import send_email
 
 mongo_obj = mongo_client()
 
@@ -19,18 +21,21 @@ def handler(event, context):
             email = emails["email"]
             print(content)
             print(email)
+            # TODO: wrap the content in a proper html template
             resp = send_email(email, content)
             if resp["statusCode"] == 200:
                 print(f"email sent to the email : {email}")
+                body = {
+                    "message": "email sent successfully!",
+                }
+                response = {"statusCode": 500, "body": json.dumps(body)}
             else:
                 print("Error in seding the email")
                 # have a notification in place a webhook
-
-        body = {
-            "message": "function executed successfully!",
-        }
-
-        response = {"statusCode": 200, "body": json.dumps(body)}
+                body = {
+                    "message": "email sent to fail",
+                }
+                response = {"statusCode": 500, "body": json.dumps(body)}
 
         return response
     except Exception:
