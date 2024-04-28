@@ -11,7 +11,7 @@ const Header = () => {
       <div>
         {/* Use the Button component */}
         <Button className="mr-4">Sign In</Button>
-        <Button className="bg-green-500 hover:bg-green-600">Sign Up</Button>
+        <Button className="">Sign Up</Button>
       </div>
     </div>
   );
